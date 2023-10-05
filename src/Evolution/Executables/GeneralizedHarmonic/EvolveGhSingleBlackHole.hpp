@@ -58,6 +58,7 @@
 #include "ParallelAlgorithms/Interpolation/Targets/Sphere.hpp"
 #include "PointwiseFunctions/GeneralRelativity/DetAndInverseSpatialMetric.hpp"
 #include "PointwiseFunctions/GeneralRelativity/Surfaces/Tags.hpp"
+#include "PointwiseFunctions/InitialDataUtilities/InitialData.hpp"
 #include "Time/Actions/ChangeSlabSize.hpp"
 #include "Time/Actions/SelfStartActions.hpp"
 #include "Time/StepChoosers/Factory.hpp"
@@ -65,9 +66,18 @@
 #include "Utilities/Blas.hpp"
 #include "Utilities/ErrorHandling/Error.hpp"
 #include "Utilities/ErrorHandling/FloatingPointExceptions.hpp"
+#include "Utilities/NoSuchType.hpp"
 #include "Utilities/ErrorHandling/SegfaultHandler.hpp"
 #include "Utilities/ProtocolHelpers.hpp"
 #include "Utilities/Serialization/RegisterDerivedClassesWithCharm.hpp"
+
+//Check if Spec is linked
+#ifdef HAS_SPEC_EXPORTER
+#include "PointwiseFunctions/AnalyticData/GeneralRelativity/SpecInitialData.hpp"
+using SpecInitialData = gr::AnalyticData::SpecInitialData;
+#else
+using SpecInitialData = NoSuchType;
+#endif
 
 template <size_t VolumeDim>
 struct EvolutionMetavars : public GeneralizedHarmonicTemplateBase<VolumeDim> {
@@ -169,7 +179,12 @@ struct EvolutionMetavars : public GeneralizedHarmonicTemplateBase<VolumeDim> {
                        intrp::Events::InterpolateWithoutInterpComponent<
                            3, ExcisionBoundary, interpolator_source_vars>>>>,
         tmpl::pair<DenseTrigger,
-                   control_system::control_system_triggers<control_systems>>>;
+                   control_system::control_system_triggers<control_systems>>,
+                   tmpl::pair<
+        evolution::initial_data::InitialData,
+            tmpl::list<
+                tmpl::conditional_t<std::is_same_v<SpecInitialData, NoSuchType>,
+                                    tmpl::list<>, SpecInitialData>>>>;
   };
 
   using typename gh_base::const_global_cache_tags;

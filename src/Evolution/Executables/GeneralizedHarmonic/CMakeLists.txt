@@ -47,6 +47,11 @@ add_spectre_parallel_executable(
   "${LIBS_TO_LINK};ApparentHorizons;ControlSystem"
   )
 
+if (TARGET SpEC::Exporter)
+  target_compile_definitions(
+    EvolveGhSingleBlackHole PRIVATE HAS_SPEC_EXPORTER)
+endif()
+
 add_generalized_harmonic_executable_without_horizon(
   1
   "${LIBS_TO_LINK}"
